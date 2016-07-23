@@ -50,19 +50,16 @@ public class BookListingActivity extends AppCompatActivity {
 
         task.execute();
 
-        BookAdapter bookAdapter = new BookAdapter(this, searchedBooks);
-        ListView listView = (ListView) findViewById(R.layout.book_listview);
-        listView.setAdapter(bookAdapter);
-
-
-
     }
 
 
-    /**
-     * {@link AsyncTask} to perform the network request on a background thread, and then
-     * update the UI with the first earthquake in the response.
-     */
+
+    private void updateUi(ArrayList<Book> books){
+        BookAdapter bookAdapter = new BookAdapter(this, searchedBooks);
+        ListView listView = (ListView) findViewById(R.layout.book_listview);
+        listView.setAdapter(bookAdapter);
+    }
+
     private class BookAsyncTask extends AsyncTask<URL,Void, ArrayList<Book>> {
 
         @Override
@@ -79,11 +76,19 @@ public class BookListingActivity extends AppCompatActivity {
             }
 
             // Extract relevant fields from the JSON response and create an {@link Event} object
-            ArrayList<Book> book = extractFeatureFromJson(jsonResponse);
+            searchedBooks= extractFeatureFromJson(jsonResponse);
 
 
             // Return the {@link Event} object as the result fo the {@link TsunamiAsyncTask}
-            return book;
+            return searchedBooks;
+        }
+
+        protected void onPostExecute(ArrayList<Book> books) {
+            if (books == null) {
+                return;
+            }
+
+            updateUi(books);
         }
 
 
@@ -180,12 +185,18 @@ public class BookListingActivity extends AppCompatActivity {
                         String title = volumeInfo.getString("title");
                         JSONArray authorArray = volumeInfo.getJSONArray("authors");
                         String author = authorArray.getString(0);
-                        double rating = volumeInfo.getDouble("averageRating");
+                        double rating = 0.0;
+                        try{
+                            rating = volumeInfo.getDouble("averageRating");
+
+                        } catch (JSONException e) {
+                            rating = 0.0;
+                        }
                         Book book = new Book(author,rating,title);
-                        books.add(book);
+
                         searchedBooks.add(book);
 
-                        return books;
+                        return searchedBooks;
 
 
                     }
