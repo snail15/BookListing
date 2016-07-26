@@ -5,8 +5,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,9 +39,6 @@ public class BookListingActivity extends AppCompatActivity {
     private static final String TERM_SEPARATOR =
             "+inauthor:";
 
-    public static ArrayList<Book> searchedBooks = new ArrayList<Book>();
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,9 +55,19 @@ public class BookListingActivity extends AppCompatActivity {
 
 
     private void updateUi(ArrayList<Book> books){
-        BookAdapter bookAdapter = new BookAdapter(this, searchedBooks);
-        ListView listView = (ListView) findViewById(R.layout.book_listview);
-        listView.setAdapter(bookAdapter);
+        if (books.size() == 0){
+            LinearLayout noResultScreen = (LinearLayout) View.inflate(BookListingActivity.this, R.layout.no_result,null);
+            setContentView(noResultScreen);
+        }
+        else {
+            BookAdapter bookAdapter = new BookAdapter(this, books);
+            ListView listView = (ListView) findViewById(R.id.book_listview);
+            listView.setAdapter(bookAdapter);
+        }
+    }
+
+    private void showToast(){
+        Toast.makeText(BookListingActivity.this, "Oops, something went wrong!",Toast.LENGTH_SHORT).show();
     }
 
     private class BookAsyncTask extends AsyncTask<URL,Void, ArrayList<Book>> {
@@ -76,11 +86,17 @@ public class BookListingActivity extends AppCompatActivity {
             }
 
             // Extract relevant fields from the JSON response and create an {@link Event} object
-            searchedBooks= extractFeatureFromJson(jsonResponse);
+            try{
+                ArrayList<Book> searchedBooks= extractFeatureFromJson(jsonResponse);
+                return searchedBooks;
+            }
+            catch (NullPointerException e){
+                Log.e(LOG_TAG, "None searched", e);
+            }
 
 
             // Return the {@link Event} object as the result fo the {@link TsunamiAsyncTask}
-            return searchedBooks;
+            return null;
         }
 
         protected void onPostExecute(ArrayList<Book> books) {
@@ -128,6 +144,7 @@ public class BookListingActivity extends AppCompatActivity {
                     jsonResponse = readFromStream(inputStream);
                 }
                 else{
+                    showToast();
                     Log.e(LOG_TAG, ""+urlConnection.getResponseCode());
                 }
             } catch (IOException e) {
@@ -163,7 +180,7 @@ public class BookListingActivity extends AppCompatActivity {
         }
 
         /**
-         * Return an {@link Event} object by parsing out information
+         * Return an  object by parsing out information
          * about the first earthquake from the input earthquakeJSON string.
          */
         private ArrayList<Book> extractFeatureFromJson(String bookJSON) {
@@ -176,11 +193,12 @@ public class BookListingActivity extends AppCompatActivity {
                 JSONObject baseJsonResponse = new JSONObject(bookJSON);
                 JSONArray itemsArray = baseJsonResponse.getJSONArray("items");
 
+
                 // If there are results in the features array
                 if (itemsArray.length() > 0) {
                     for (int i = 0; i < itemsArray.length(); i++){
                         // Extract out the title, author, and rating
-                        JSONObject itemObject = itemsArray.getJSONObject(0);
+                        JSONObject itemObject = itemsArray.getJSONObject(i);
                         JSONObject volumeInfo = itemObject.getJSONObject("volumeInfo");
                         String title = volumeInfo.getString("title");
                         JSONArray authorArray = volumeInfo.getJSONArray("authors");
@@ -194,16 +212,15 @@ public class BookListingActivity extends AppCompatActivity {
                         }
                         Book book = new Book(author,rating,title);
 
-                        searchedBooks.add(book);
-
-                        return searchedBooks;
-
+                        books.add(book);
 
                     }
+                    return books;
 
                 }
+
             } catch (JSONException e) {
-                Log.e(LOG_TAG, "Problem parsing the earthquake JSON results", e);
+                Log.e(LOG_TAG, "Problem parsing the book JSON results", e);
             }
             return null;
         }
