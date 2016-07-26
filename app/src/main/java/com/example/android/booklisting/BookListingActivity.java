@@ -55,7 +55,7 @@ public class BookListingActivity extends AppCompatActivity {
 
 
     private void updateUi(ArrayList<Book> books){
-        if (books.size() == 0){
+        if (books == null){
             LinearLayout noResultScreen = (LinearLayout) View.inflate(BookListingActivity.this, R.layout.no_result,null);
             setContentView(noResultScreen);
         }
@@ -100,9 +100,9 @@ public class BookListingActivity extends AppCompatActivity {
         }
 
         protected void onPostExecute(ArrayList<Book> books) {
-            if (books == null) {
-                return;
-            }
+//            if (books == null) {
+//                return;
+//            }
 
             updateUi(books);
         }
@@ -221,8 +221,8 @@ public class BookListingActivity extends AppCompatActivity {
 
             } catch (JSONException e) {
                 Log.e(LOG_TAG, "Problem parsing the book JSON results", e);
+                return null;
             }
-            return null;
         }
     }
 }
