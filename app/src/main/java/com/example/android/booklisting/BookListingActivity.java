@@ -66,9 +66,6 @@ public class BookListingActivity extends AppCompatActivity {
         }
     }
 
-    private void showToast(){
-        Toast.makeText(BookListingActivity.this, "Oops, something went wrong!",Toast.LENGTH_SHORT).show();
-    }
 
     private class BookAsyncTask extends AsyncTask<URL,Void, ArrayList<Book>> {
 
@@ -100,9 +97,6 @@ public class BookListingActivity extends AppCompatActivity {
         }
 
         protected void onPostExecute(ArrayList<Book> books) {
-//            if (books == null) {
-//                return;
-//            }
 
             updateUi(books);
         }
@@ -144,7 +138,6 @@ public class BookListingActivity extends AppCompatActivity {
                     jsonResponse = readFromStream(inputStream);
                 }
                 else{
-                    showToast();
                     Log.e(LOG_TAG, ""+urlConnection.getResponseCode());
                 }
             } catch (IOException e) {
@@ -223,6 +216,6 @@ public class BookListingActivity extends AppCompatActivity {
                 Log.e(LOG_TAG, "Problem parsing the book JSON results", e);
                 return null;
             }
-        }
+        return null;}
     }
 }
